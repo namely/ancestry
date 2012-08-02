@@ -756,15 +756,13 @@ class HasAncestryTreeTest < ActiveSupport::TestCase
   end
 
   def test_original_id_should_be_used
-    AncestryTestDatabase.with_model :original_id => true do |model|
+    AncestryTestDatabase.with_model :id_column => :id_original do |model|
       grandparent = model.create!
-      grandparent.update_attribute :original_id, 1234      
+      grandparent.update_attribute :id_original, 1234      
 
       parent = grandparent.children.create!      
       assert_equal parent.ancestor_ids, [1234]
 
-      child = parent.children.create!
-      assert_equal child.ancestry_ids, [1234, parent.original_id]
     end
   end
 
