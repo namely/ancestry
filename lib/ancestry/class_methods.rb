@@ -48,7 +48,7 @@ module Ancestry
         node.ancestor_ids.inject(arranged_nodes) do |insertion_point, ancestor_id|
           insertion_point.each do |parent, children|
             # Change the insertion point to children if node is a descendant of this parent
-            insertion_point = children if ancestor_id == parent.id
+            insertion_point = children if ancestor_id == parent.ancestry_id
           end
           insertion_point
         end[node] = ActiveSupport::OrderedHash.new
@@ -80,19 +80,19 @@ module Ancestry
           begin
             # ... check validity of ancestry column
             if !node.valid? and !node.errors[node.class.ancestry_column].blank?
-              raise Ancestry::AncestryIntegrityException.new("Invalid format for ancestry column of node #{node.id}: #{node.read_attribute node.ancestry_column}.")
+              raise Ancestry::AncestryIntegrityException.new("Invalid format for ancestry column of node #{node.ancestry_id}: #{node.read_attribute node.ancestry_column}.")
             end
             # ... check that all ancestors exist
             node.ancestor_ids.each do |ancestor_id|
               unless exists? ancestor_id
-                raise Ancestry::AncestryIntegrityException.new("Reference to non-existent node in node #{node.id}: #{ancestor_id}.")
+                raise Ancestry::AncestryIntegrityException.new("Reference to non-existent node in node #{node.ancestry_id}: #{ancestor_id}.")
               end
             end
             # ... check that all node parents are consistent with values observed earlier
             node.path_ids.zip([nil] + node.path_ids).each do |node_id, parent_id|
               parents[node_id] = parent_id unless parents.has_key? node_id
               unless parents[node_id] == parent_id
-                raise Ancestry::AncestryIntegrityException.new("Conflicting parent id found in node #{node.id}: #{parent_id || 'nil'} for node #{node_id} while expecting #{parents[node_id] || 'nil'}")
+                raise Ancestry::AncestryIntegrityException.new("Conflicting parent id found in node #{node.ancestry_id}: #{parent_id || 'nil'} for node #{node_id} while expecting #{parents[node_id] || 'nil'}")
               end
             end
           rescue Ancestry::AncestryIntegrityException => integrity_exception
@@ -125,17 +125,17 @@ module Ancestry
             parents[node.id] = node.parent_id if exists? node.parent_id
 
             # Reset parent id in array to nil if it introduces a cycle
-            parent = parents[node.id]
-            until parent.nil? || parent == node.id
+            parent = parents[node.ancestry_id]
+            until parent.nil? || parent == node.ancestry_id
               parent = parents[parent]
             end
-            parents[node.id] = nil if parent == node.id 
+            parents[node.id] = nil if parent == node.ancestry_id 
           end
           
           # For each node ...
           self.base_class.find_each do |node|
             # ... rebuild ancestry from parents array
-            ancestry, parent = nil, parents[node.id]
+            ancestry, parent = nil, parents[node.ancestry_id]
             until parent.nil?
               ancestry, parent = if ancestry.nil? then parent else "#{parent}/#{ancestry}" end, parents[parent]
             end
@@ -154,7 +154,7 @@ module Ancestry
           node.without_ancestry_callbacks do
             node.update_attribute ancestry_column, ancestry
           end
-          build_ancestry_from_parent_ids! node.id, if ancestry.nil? then "#{node.id}" else "#{ancestry}/#{node.id}" end
+          build_ancestry_from_parent_ids! node.ancestry_id, if ancestry.nil? then "#{node.ancestry_id}" else "#{ancestry}/#{node.ancestry_id}" end
         end
       end
     end
@@ -169,5 +169,6 @@ module Ancestry
         end
       end
     end
+
   end
 end

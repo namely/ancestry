@@ -755,6 +755,17 @@ class HasAncestryTreeTest < ActiveSupport::TestCase
     end
   end
 
+  def test_original_id_should_be_used
+    AncestryTestDatabase.with_model :id_column => :id_original do |model|
+      grandparent = model.create!
+      grandparent.update_attribute :id_original, 1234      
+
+      parent = grandparent.children.create!      
+      assert_equal parent.ancestor_ids, [1234]
+
+    end
+  end
+
   def test_arrangement_nesting
     AncestryTestDatabase.with_model :extra_columns => {:name => :string} do |model|
       model.send :default_scope, model.order('name')
@@ -764,4 +775,5 @@ class HasAncestryTreeTest < ActiveSupport::TestCase
       assert_equal 1, model.arrange.count
     end
   end
+
 end
