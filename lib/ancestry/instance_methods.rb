@@ -111,7 +111,7 @@ module Ancestry
     end
 
     def parent_id= parent_id
-      self.parent = if parent_id.blank? then nil else unscoped_find(parent_id) end
+      self.parent = if parent_id.blank? then nil else find_by_ancestry_id(parent_id) end
     end
 
     def parent_id
@@ -119,7 +119,7 @@ module Ancestry
     end
 
     def parent
-      if parent_id.blank? then nil else unscoped_find(parent_id) end
+      if parent_id.blank? then nil else find_by_ancestry_id(parent_id) end
     end
 
     # Root
@@ -128,7 +128,7 @@ module Ancestry
     end
 
     def root
-      if root_id == id then self else unscoped_find(root_id) end
+      if root_id == id then self else find_by_ancestry_id(root_id) end
     end
 
     def is_root?
@@ -243,8 +243,8 @@ module Ancestry
       ancestry.nil? || (ancestry.to_s =~ Ancestry::ANCESTRY_PATTERN && !ancestor_ids.include?(self.id))
     end
     
-    def unscoped_find id
-      self.base_class.unscoped { self.base_class.find(id) }
+    def find_by_ancestry_id id
+      self.base_class.send "find_by_#{self.class.id_column}", id
     end
 
     def set_ancestry_id
