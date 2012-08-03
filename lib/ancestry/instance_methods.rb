@@ -248,7 +248,7 @@ module Ancestry
     end
 
     def set_ancestry_id
-      self.attributes[id_column.to_s] = id unless !read_attribute(id_column).blank?
+      self.update_column(id_column, id) unless !read_attribute(id_column).blank?
     end
 
   end

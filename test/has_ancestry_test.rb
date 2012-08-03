@@ -755,14 +755,10 @@ class HasAncestryTreeTest < ActiveSupport::TestCase
     end
   end
 
-  def test_original_id_should_be_used
+  def test_id_column_should_be_set
     AncestryTestDatabase.with_model :id_column => :id_original do |model|
-      grandparent = model.create!
-      grandparent.update_attribute :id_original, 1234      
-
-      parent = grandparent.children.create!      
-      assert_equal parent.ancestor_ids, [1234]
-
+      node = model.create!
+      assert_equal node.id_original, node.id, "Original ID should be set to id by default"
     end
   end
 
